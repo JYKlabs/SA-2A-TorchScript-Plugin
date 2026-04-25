@@ -4,21 +4,34 @@ This repository contains a separate real-time JUCE plugin for hosting a TorchScr
 
 It is **not** the offline recording or dataset-capture tool used for the paper. Instead, it was created to run the learned compressor model in a live audio context and to provide a simple real-time interface for testing a PyTorch-exported model.
 
+A prebuilt VST3 package is provided in `TCNPluginvst3.zip`.
+
+## Screenshot
+
+<p align="center">
+  <img src="SA-2APluginUIScreenshot.png" width="450"><br>
+  <em>SA-2A TorchScript plugin user interface.</em>
+</p>
+
 ## Overview
 
 The plugin loads a single TorchScript model file and exposes three main controls:
 
-- **Input Gain**
-- **Peak Reduction**
-- **Output Gain**
+- Input Gain
+- Peak Reduction
+- Output Gain
 
 The loaded model is applied in real time to the incoming audio signal. If no model is loaded, the plugin behaves as a gain-only pass-through processor.
 
-The plugin is available in the following formats:
+## Included Formats
+
+The plugin project is configured for:
 
 - VST3
 - AU
 - Standalone
+
+A prebuilt VST3 version is included in `TCNPluginvst3.zip` for convenient use without rebuilding from source.
 
 ## Features
 
@@ -32,6 +45,7 @@ The plugin is available in the following formats:
 - Model loading and model clearing from the plugin UI
 - Stereo input/output support
 - Automatic pass-through behavior when no model is loaded
+- Fixed internal frame size of 512 samples for model inference
 
 ## Plugin Controls
 
@@ -61,39 +75,33 @@ For best results, the exported model should be compatible with frame-based real-
 When audio is processed:
 
 1. The input block is copied into an internal buffer.
-2. The buffer is multiplied by the current **Input Gain**.
-3. The current **Peak Reduction** value is passed to the model as a conditioning tensor.
+2. The buffer is multiplied by the current Input Gain.
+3. The current Peak Reduction value is passed to the model as a conditioning tensor.
 4. The model is executed without gradients.
-5. The output is multiplied by **Output Gain**.
+5. The output is multiplied by Output Gain.
 6. The processed samples are written back to the host buffer.
 
-If no model has been loaded, the plugin simply applies the input and output gain stages and returns the signal without learned processing.
+If no model has been loaded, the plugin applies the input and output gain stages and returns the signal without learned processing.
 
 ## Usage
 
-### 1. Build the plugin
-Build the project with JUCE, CMake, and LibTorch available.
+### Using the VST3 Package
 
-### 2. Load a model
-Open the plugin interface and click:
+1. Unzip `TCNPluginvst3.zip`.
+2. Copy the `.vst3` bundle to your system’s VST3 plug-in folder, for example:
+   - macOS: `~/Library/Audio/Plug-Ins/VST3/`
+3. Scan the plug-in in your DAW.
+4. Open the plug-in UI and click **Load Model (.pt)**.
+5. Select a TorchScript model file.
+6. Adjust **Input Gain**, **Peak Reduction**, and **Output Gain** as needed.
 
-**Load Model (.pt)**
+### Using the Standalone App
 
-Then select a TorchScript `.pt` file.
+If you build the project from source, the plugin can also be run as a standalone application.
 
-### 3. Adjust the controls
-Set:
+### Clearing the Model
 
-- **Input Gain** for input scaling
-- **Peak Reduction** for the desired compressor condition
-- **Output Gain** for post-processing level
-
-### 4. Clear the model
-Click:
-
-**Clear Model**
-
-to remove the loaded TorchScript module and return to gain-only behavior.
+Click **Clear Model** to unload the currently loaded TorchScript module and return to gain-only behavior.
 
 ## Stereo Operation
 
@@ -126,12 +134,30 @@ If you use a custom LibTorch installation, make sure the Torch CMake package is 
 - Stereo I/O is required.
 - The model must be exported as TorchScript and compatible with the plugin’s two-input forward call.
 
-## Relation to the Research
+## Relationship to the Research
 
-This plugin is a separate real-time TorchScript host developed alongside the research on neural modeling of an analog SA-2A-style compressor.
+This plugin is a separate real-time implementation developed alongside the broader SA-2A modeling work.
 
-It was created for live evaluation and model deployment, and is distinct from the dataset-generation and training framework used in the study.
+It is intended for live evaluation and model deployment, and it is distinct from the offline dataset-generation and training framework used for the paper.
 
-## Related Research
+## File Layout
 
-This plugin is related to ongoing research on TCN-based modeling of an analog optical compressor, but it is distributed here as a standalone real-time implementation independent of the research dataset and training framework.
+Typical files in this repository include:
+
+- `Source/CMakeLists.txt`
+- `PluginProcessor.cpp`
+- `PluginProcessor.h`
+- `PluginEditor.cpp`
+- `PluginEditor.h`
+- `TCNPluginvst3.zip`
+- `SA-2A Plugin UI Screenshot.png`
+
+## Notes
+
+The model-loading workflow is intentionally simple:
+
+- load one `.pt` file
+- adjust the three controls
+- clear the model when needed
+
+This keeps the plugin focused on real-time evaluation of a TorchScript compressor model rather than on preset management or complex host-side state handling.
